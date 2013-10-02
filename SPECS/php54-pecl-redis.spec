@@ -12,6 +12,10 @@
 %global pecl_name  redis
 %global with_zts   0%{?__ztsphp:1}
 
+%define real_name php-pecl-redis
+%define base_ver 2.2
+%define php_base php54
+
 %if 0%{?fedora} >= 19
 %ifarch ppc64
 # redis have ExcludeArch: ppc64
@@ -25,9 +29,9 @@
 %endif
 
 Summary:       Extension for communicating with the Redis key-value store
-Name:          php-pecl-redis
+Name:          %{php_base}-pecl-redis
 Version:       2.2.4
-Release:       1%{?dist}
+Release:       2.ius%{?dist}
 License:       PHP
 Group:         Development/Languages
 URL:           http://pecl.php.net/package/redis
@@ -35,22 +39,25 @@ Source0:       http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
 # https://github.com/nicolasff/phpredis/issues/332 - missing tests
 Source1:       https://github.com/nicolasff/phpredis/archive/%{version}.tar.gz
 
-BuildRequires: php-devel
-BuildRequires: php-pecl-igbinary-devel
+BuildRequires: %{php_base}-devel %{php_base}-pear
+#BuildRequires: php-pecl-igbinary-devel
 # to run Test suite
 %if %{with_test}
 BuildRequires: redis >= 2.6
 %endif
 
-Requires:      php(zend-abi) = %{php_zend_api}
-Requires:      php(api) = %{php_core_api}
+Requires:      %{php_base}(zend-abi) = %{php_zend_api}
+Requires:      %{php_base}(api) = %{php_core_api}
 # php-pecl-igbinary missing php-pecl(igbinary)%{?_isa}
-Requires:      php-pecl-igbinary%{?_isa}
-Obsoletes:     php-redis < %{version}
+Conflicts:     %{real_name} < %{version}
 Provides:      php-redis = %{version}-%{release}
+Provides:      %{php_base}-redis = %{version}-%{release}
 Provides:      php-redis%{?_isa} = %{version}-%{release}
+Provides:      %{php_base}-redis%{?_isa} = %{version}-%{release}
 Provides:      php-pecl(%{pecl_name}) = %{version}
+Provides:      %{php_base}-pecl(%{pecl_name}) = %{version}
 Provides:      php-pecl(%{pecl_name})%{?_isa} = %{version}
+Provides:      %{php_base}-pecl(%{pecl_name})%{?_isa} = %{version}
 
 # Filter private shared object
 %{?filter_provides_in: %filter_provides_in %{_libdir}/.*\.so$}
@@ -91,7 +98,7 @@ cat > %{pecl_name}.ini << 'EOF'
 ; Enable %{pecl_name} extension module
 extension = %{pecl_name}.so
 
-; phpredis can be used to store PHP sessions. 
+; phpredis can be used to store PHP sessions.
 ; To do this, uncomment and configure below
 ;session.save_handler = %{pecl_name}
 ;session.save_path = "tcp://host1:6379?weight=1, tcp://host2:6379?weight=2&timeout=2.5, tcp://host3:6379?weight=2"
@@ -104,7 +111,6 @@ cd nts
 %configure \
     --enable-redis \
     --enable-redis-session \
-    --enable-redis-igbinary \
     --with-php-config=%{_bindir}/php-config
 make %{?_smp_mflags}
 
@@ -114,7 +120,6 @@ cd ../zts
 %configure \
     --enable-redis \
     --enable-redis-session \
-    --enable-redis-igbinary \
     --with-php-config=%{_bindir}/zts-php-config
 make %{?_smp_mflags}
 %endif
@@ -122,7 +127,7 @@ make %{?_smp_mflags}
 
 %install
 # for short circuit
-rm -f ?ts/modules/igbinary.so
+#rm -f ?ts/modules/igbinary.so
 
 # Install the NTS stuff
 make -C nts install INSTALL_ROOT=%{buildroot}
@@ -136,22 +141,20 @@ install -D -m 644 %{pecl_name}.ini %{buildroot}%{php_ztsinidir}/%{pecl_name}.ini
 
 # Install the package XML file
 install -D -m 644 package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
-
+echo %{pecl_xmldir}
 
 %check
 # simple module load test
-ln -sf %{php_extdir}/igbinary.so nts/modules/igbinary.so
+#ln -sf %{php_extdir}/igbinary.so nts/modules/igbinary.so
 php --no-php-ini \
     --define extension_dir=nts/modules \
-    --define extension=igbinary.so \
     --define extension=%{pecl_name}.so \
     --modules | grep %{pecl_name}
 
 %if %{with_zts}
-ln -sf %{php_ztsextdir}/igbinary.so zts/modules/igbinary.so
+#ln -sf %{php_ztsextdir}/igbinary.so zts/modules/igbinary.so
 %{__ztsphp} --no-php-ini \
     --define extension_dir=zts/modules \
-    --define extension=igbinary.so \
     --define extension=%{pecl_name}.so \
     --modules | grep %{pecl_name}
 %endif
@@ -188,7 +191,6 @@ sed -e "s/6379/$port/" -i TestRedis.php
 ret=0
 php --no-php-ini \
     --define extension_dir=../modules \
-    --define extension=igbinary.so \
     --define extension=%{pecl_name}.so \
     TestRedis.php || ret=1
 
@@ -228,6 +230,10 @@ fi
 
 
 %changelog
+* Wed Oct 02 2013 Ben Harper <ben.harper@rackspace.com> - 2.2.4-2.ius
+- porting from EPEL
+- removing igbinary requirements
+
 * Mon Sep 09 2013 Remi Collet <remi@fedoraproject.org> - 2.2.4-1
 - Update to 2.2.4
 
