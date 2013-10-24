@@ -31,7 +31,7 @@
 Summary:       Extension for communicating with the Redis key-value store
 Name:          %{php_base}-pecl-redis
 Version:       2.2.4
-Release:       2.ius%{?dist}
+Release:       3.ius%{?dist}
 License:       PHP
 Group:         Development/Languages
 URL:           http://pecl.php.net/package/redis
@@ -52,6 +52,7 @@ Requires:      %{php_base}(api) = %{php_core_api}
 # php-pecl-igbinary missing php-pecl(igbinary)%{?_isa}
 Conflicts:     %{real_name} < %{version}
 Provides:      php-redis = %{version}-%{release}
+Provides:      %{real_name} = %{version}-%{release}
 Provides:      %{php_base}-redis = %{version}-%{release}
 Provides:      php-redis%{?_isa} = %{version}-%{release}
 Provides:      %{php_base}-redis%{?_isa} = %{version}-%{release}
@@ -230,6 +231,9 @@ fi
 
 
 %changelog
+* Thu Oct 24 2013 Ben Harper <ben.harper@rackspace.com> - 2.2.4-3.ius
+- add prodives for php-pecl-redis
+
 * Wed Oct 02 2013 Ben Harper <ben.harper@rackspace.com> - 2.2.4-2.ius
 - porting from EPEL
 - removing igbinary requirements
